@@ -187,7 +187,7 @@ export function PilaDeValor({ p }: { p: Precios }) {
         </div>
       </div>
       <div className="mt-8 text-center">
-        <Link href="/checkout" className="btn-primario text-base">
+        <Link href="/checkout" className="btn-comprar text-base">
           Quiero todo esto →
         </Link>
       </div>

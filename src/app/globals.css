@@ -30,6 +30,12 @@ body {
       bg-linear-to-r from-marca to-acento shadow-[0_0_40px_-8px_var(--color-marca)]
       hover:brightness-110 hover:shadow-[0_0_55px_-6px_var(--color-marca)] active:scale-[.98];
   }
+  /* Botones de compra: amarillo con negro, distintos al resto */
+  .btn-comprar {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-yellow-400 px-6 py-3.5 font-bold text-black
+      shadow-md shadow-black/40 transition hover:bg-yellow-300 active:scale-[.98]
+      focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-300;
+  }
   .btn-secundario {
     @apply inline-flex items-center justify-center gap-2 rounded-full border border-borde bg-white/5 px-6 py-3.5
       font-semibold text-texto transition hover:bg-white/10;

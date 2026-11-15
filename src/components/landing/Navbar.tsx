@@ -2,6 +2,8 @@ import Link from "next/link";
 import { marca } from "@/config/curso";
 import { Logo } from "./Logo";
 import { MenuMovil } from "./MenuMovil";
+import { BotonComprar } from "./BotonComprar";
+import type { Precios } from "@/lib/precios-tipos";
 
 export const enlacesNav = [
   { href: "#como-funciona", texto: "Cómo funciona" },
@@ -10,7 +12,7 @@ export const enlacesNav = [
   { href: "#faq", texto: "Preguntas" },
 ];
 
-export function Navbar() {
+export function Navbar({ p }: { p: Precios }) {
   return (
     <header className="sticky top-0 z-40 border-b border-borde/60 bg-fondo/75 backdrop-blur-xl">
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
@@ -34,10 +36,8 @@ export function Navbar() {
           <Link href="/entrar" className="hidden text-sm text-suave hover:text-texto lg:inline">
             Mi cuenta
           </Link>
-          <a href="#precio" className="btn-primario hidden px-4! py-2! text-sm sm:inline-flex">
-            Comprar ahora
-          </a>
-          <MenuMovil enlaces={enlacesNav} />
+          <BotonComprar p={p} href="#precio" compacto className="hidden! sm:inline-flex!" />
+          <MenuMovil enlaces={enlacesNav} p={p} />
         </div>
       </nav>
     </header>

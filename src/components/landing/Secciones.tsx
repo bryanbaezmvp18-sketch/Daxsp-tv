@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { BotonComprar } from "./BotonComprar";
 import {
   beneficios,
   pasos,
@@ -193,9 +194,7 @@ export function Precio({ p }: { p: Precios }) {
             ))}
           </ul>
 
-          <Link href="/checkout" className="btn-primario mt-8 w-full text-base">
-            Comprar ahora →
-          </Link>
+          <BotonComprar p={p} className="mt-8 w-full" />
           <p className="mt-4 text-center text-xs text-suave">
             💳 Tarjeta de crédito/débito · PayPal · 🏦 Transferencia bancaria
           </p>
@@ -248,9 +247,7 @@ export function CTAFinal({ p }: { p: Precios }) {
         <p className="mx-auto mt-4 max-w-lg text-suave">
           Únete a {marca.nombre} y aprende el método completo para crear contenido sin salir en cámara.
         </p>
-        <Link href="/checkout" className="btn-primario mt-8 text-base">
-          Comprar ahora · {formatoUSD(p.usd)}
-        </Link>
+        <BotonComprar p={p} className="mt-8" />
       </div>
     </section>
   );
@@ -284,9 +281,7 @@ export function CTAMovil({ p }: { p: Precios }) {
           <div className="font-display text-lg font-bold">{formatoUSD(p.usd)}</div>
           {p.usdAntes && <s className="text-xs text-suave">{formatoUSD(p.usdAntes)}</s>}
         </div>
-        <Link href="/checkout" className="btn-primario flex-1 py-3!">
-          Comprar ahora
-        </Link>
+        <BotonComprar p={p} compacto tachado={false} className="flex-1 py-3!" />
       </div>
     </div>
   );

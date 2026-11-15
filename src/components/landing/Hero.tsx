@@ -4,6 +4,7 @@ import { BotonGoogle } from "@/components/cliente/BotonGoogle";
 import { BotonIniciarSesion } from "@/components/cliente/BotonIniciarSesion";
 import { BannerOferta } from "./BannerOferta";
 import type { Precios } from "@/lib/precios-tipos";
+import { BotonComprar } from "./BotonComprar";
 
 export function Hero({ p }: { p: Precios }) {
   return (
@@ -26,18 +27,7 @@ export function Hero({ p }: { p: Precios }) {
           <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-center lg:justify-start">
             <BotonGoogle texto="Registrarse con Google" />
             <BotonIniciarSesion />
-            <a
-              href="/checkout"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-yellow-400 px-6 py-3.5 text-base font-bold whitespace-nowrap text-black shadow-md shadow-black/40 transition hover:bg-yellow-300 active:scale-[.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-300"
-            >
-              <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="9" cy="21" r="1" />
-                <circle cx="20" cy="21" r="1" />
-                <path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6" />
-              </svg>
-              Comprar curso
-              <span className="rounded-full bg-black px-2 py-0.5 text-sm font-bold text-yellow-400">{formatoUSD(p.usd)}</span>
-            </a>
+            <BotonComprar p={p} texto="Comprar curso" />
           </div>
           <BannerOferta p={p} />
 

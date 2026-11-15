@@ -72,7 +72,7 @@ export default async function MiCuentaPage() {
             {c.estadoCompra === "sin_compra" && (
               <>
                 <p className="text-suave">Aún no has comprado el curso.</p>
-                <Link href="/checkout" className="btn-primario mt-4">Comprar curso</Link>
+                <Link href="/checkout" className="btn-comprar mt-4">Comprar curso</Link>
               </>
             )}
             {c.estadoCompra === "pendiente" && (

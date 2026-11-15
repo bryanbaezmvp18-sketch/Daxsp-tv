@@ -152,7 +152,7 @@ export const instructor = {
   nombre: "Tu nombre",
   rol: "Creador de Daxsp TV",
   bio: "Escribe aquí 2 o 3 líneas sobre ti: qué has logrado creando contenido, cuántas vistas o seguidores has conseguido y por qué decidiste enseñar el método.",
-  foto: null as string | null, // p. ej. "/instructor.jpg" dentro de /public
+  foto: "/instructor.jpeg" as string | null, // imagen dentro de /public
   stats: [
     { valor: "+1M", etiqueta: "vistas" },
     { valor: "+10K", etiqueta: "seguidores" },

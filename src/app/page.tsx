@@ -21,7 +21,6 @@ import {
   ParaQuien,
   Testimonios,
   PilaDeValor,
-  BotonWhatsApp,
 } from "@/components/landing/Persuasion";
 
 export const revalidate = 3600; // además se actualiza al instante cuando cambias precios en el panel
@@ -32,7 +31,7 @@ export default async function Home() {
     <>
       <VideoIntro />
       <BarraOferta p={p} />
-      <Navbar />
+      <Navbar p={p} />
       <main>
         <Hero p={p} />
         <Cifras />
@@ -51,7 +50,6 @@ export default async function Home() {
       </main>
       <Footer />
       <CTAMovil p={p} />
-      <BotonWhatsApp />
     </>
   );
 }

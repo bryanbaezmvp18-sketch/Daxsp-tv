@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BotonComprar } from "./BotonComprar";
+import type { Precios } from "@/lib/precios-tipos";
 
 /** Menú desplegable para móvil y tablet (oculto en pantallas grandes). */
-export function MenuMovil({ enlaces }: { enlaces: { href: string; texto: string }[] }) {
+export function MenuMovil({ enlaces, p }: { enlaces: { href: string; texto: string }[]; p: Precios }) {
   const [abierto, setAbierto] = useState(false);
 
   useEffect(() => {
@@ -46,9 +48,7 @@ export function MenuMovil({ enlaces }: { enlaces: { href: string; texto: string 
                 </a>
               </li>
               <li className="pt-2 pb-1">
-                <a href="#precio" onClick={() => setAbierto(false)} className="btn-primario w-full">
-                  Comprar ahora
-                </a>
+                <BotonComprar p={p} href="#precio" onClick={() => setAbierto(false)} className="w-full" />
               </li>
             </ul>
           </div>
