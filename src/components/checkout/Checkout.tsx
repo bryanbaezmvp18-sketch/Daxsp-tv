@@ -45,9 +45,10 @@ export function Checkout({
           Tus datos
         </h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <Campo label="Nombre" value={datos.nombre} onChange={cambiar("nombre")} autoComplete="given-name" required minLength={2} maxLength={50} />
-          <Campo label="Apellido" value={datos.apellido} onChange={cambiar("apellido")} autoComplete="family-name" required minLength={2} maxLength={50} />
+          <Campo id="campo-nombre" label="Nombre" value={datos.nombre} onChange={cambiar("nombre")} autoComplete="given-name" required minLength={2} maxLength={50} />
+          <Campo id="campo-apellido" label="Apellido" value={datos.apellido} onChange={cambiar("apellido")} autoComplete="family-name" required minLength={2} maxLength={50} />
           <Campo
+            id="campo-telefono"
             label="Teléfono / WhatsApp"
             value={datos.telefono}
             onChange={cambiar("telefono")}

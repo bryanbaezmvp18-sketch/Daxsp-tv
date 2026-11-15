@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { formatoUSD } from "@/config/curso";
 import type { Precios } from "@/lib/precios-tipos";
 import type { DatosCliente } from "@/lib/cliente";
-import { faltanDatos } from "./campos";
+import { campoFaltante, faltanDatos, irACampo } from "./campos";
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
 
@@ -54,7 +54,8 @@ export function BotonesPayPal({ datos, activo, p }: { datos: DatosCliente; activ
             const falta = faltanDatos(datosRef.current);
             if (falta) {
               setMensaje(falta);
-              document.getElementById("paso-datos")?.scrollIntoView({ behavior: "smooth" });
+              // Lleva al campo que falta y lo marca (antes solo subía y el aviso quedaba abajo, sin verse)
+              irACampo(campoFaltante(datosRef.current) ?? "nombre");
               return actions.reject();
             }
             setMensaje("");
@@ -129,14 +130,15 @@ export function BotonesPayPal({ datos, activo, p }: { datos: DatosCliente; activ
         <p className="py-4 text-center text-sm text-marca-2">Confirmando tu pago… no cierres esta página.</p>
       )}
 
-      {/* PayPal pinta aquí sus botones (fondo blanco para que se vean bien) */}
-      <div ref={contenedor} className={`rounded-2xl bg-white p-3 ${estado === "listo" || estado === "procesando" ? "" : "hidden"}`} />
-
+      {/* Aviso ENCIMA de los botones para que se vea al volver */}
       {mensaje && (
-        <p role="alert" className="mt-4 rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-sm text-amber-200">
-          {mensaje}
+        <p role="alert" className="mb-4 rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-sm text-amber-200">
+          ⚠️ {mensaje}
         </p>
       )}
+
+      {/* PayPal pinta aquí sus botones (fondo blanco para que se vean bien) */}
+      <div ref={contenedor} className={`rounded-2xl bg-white p-3 ${estado === "listo" || estado === "procesando" ? "" : "hidden"}`} />
       <p className="mt-4 text-center text-xs text-suave">🔒 Pago procesado por PayPal. Nunca vemos ni guardamos los datos de tu tarjeta.</p>
     </div>
   );
