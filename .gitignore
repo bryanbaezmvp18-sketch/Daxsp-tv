@@ -1,0 +1,27 @@
+node_modules
+.next
+.next-emuladores
+out
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+
+# Secretos
+.env
+.env.local
+.env.*.local
+service-account*.json
+*firebase-adminsdk*.json
+
+# Contenido de pago del curso: vive en Firebase Storage (privado), nunca en el repositorio
+arvhivos curso/
+archivos curso/
+
+# Registros de los emuladores
+*-debug.log
+
+# Copia original del video (la web usa public/video/intro.mp4)
+src/video/
+
+# Configuración local del editor/asistente
+.claude/

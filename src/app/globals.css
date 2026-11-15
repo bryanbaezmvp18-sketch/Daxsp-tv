@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+@theme {
+  --color-fondo: #07060d;
+  --color-superficie: #100e1a;
+  --color-borde: #232036;
+  --color-texto: #f4f2ff;
+  --color-suave: #a29fbd;
+  --color-marca: #8b5cf6;
+  --color-marca-2: #22d3ee;
+  --color-acento: #f472b6;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-grotesk), var(--font-inter), ui-sans-serif, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer components {
+  .btn-primario {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 font-semibold text-white transition
+      bg-linear-to-r from-marca to-acento shadow-[0_0_40px_-8px_var(--color-marca)]
+      hover:brightness-110 hover:shadow-[0_0_55px_-6px_var(--color-marca)] active:scale-[.98];
+  }
+  .btn-secundario {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-borde bg-white/5 px-6 py-3.5
+      font-semibold text-texto transition hover:bg-white/10;
+  }
+  .tarjeta {
+    @apply rounded-2xl border border-borde bg-superficie/80 backdrop-blur;
+  }
+  .texto-degradado {
+    @apply bg-linear-to-r from-marca-2 via-marca to-acento bg-clip-text text-transparent;
+  }
+  .etiqueta {
+    @apply inline-flex items-center gap-2 rounded-full border border-marca/30 bg-marca/10 px-3 py-1 text-xs font-semibold
+      uppercase tracking-wider text-marca-2;
+  }
+}
+
+/* Brillo que cruza el botón «Entrar» del video de inicio */
+@keyframes brillo-boton {
+  0%, 55% { transform: translateX(0) skewX(-12deg); }
+  100% { transform: translateX(400%) skewX(-12deg); }
+}
+.brillo-boton {
+  animation: brillo-boton 3.2s ease-in-out infinite;
+}
+
+/* Banner de oferta: borde que se desplaza y segundos que "saltan" */
+@keyframes borde-oferta {
+  to { background-position: 250% 0; }
+}
+.borde-oferta {
+  animation: borde-oferta 4s linear infinite;
+}
+@keyframes tic-numero {
+  0% { transform: translateY(-35%); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.tic-numero {
+  display: inline-block;
+  animation: tic-numero 0.35s ease-out;
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+details[open] .chevron {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation: none !important; transition: none !important; }
+}

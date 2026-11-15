@@ -1,0 +1,36 @@
+{
+  "name": "daxsp-tv",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "dev:emuladores": "node scripts/dev-emuladores.mjs",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "emuladores": "firebase emulators:start --project demo-daxsp --only auth,firestore,storage",
+    "crear-admin": "node --env-file=.env.local scripts/crear-admin.mjs",
+    "seed": "node --env-file=.env.local scripts/seed.mjs",
+    "configurar-firebase": "node scripts/configurar-firebase.mjs",
+    "probar-conexion": "node --env-file=.env.local scripts/probar-conexion.mjs",
+    "ver-pedidos": "node --env-file=.env.local scripts/ver-pedidos.mjs",
+    "subir-curso": "node --env-file=.env.local scripts/subir-curso.mjs"
+  },
+  "dependencies": {
+    "firebase": "^13.3.0",
+    "firebase-admin": "^14.5.1",
+    "next": "^15.5.29",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.5",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "firebase-tools": "^13.35.1",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^5.9.3"
+  }
+}

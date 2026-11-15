@@ -1,0 +1,31 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function esAdmin() { return request.auth != null && request.auth.token.admin == true; }
+
+    // Comprobantes: cada visitante (usuario anónimo invisible) solo puede SUBIR
+    // a su propia carpeta, imágenes o PDF de máximo 5 MB cada uno (hasta 3 por pedido).
+    // No puede leerlos, sobrescribirlos ni borrarlos. Solo el admin los lee.
+    match /comprobantes/{uid}/{pedidoId}/{archivo} {
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && archivo.matches('foto-[1-3]\\.(jpeg|jpg|png|webp|heic|heif|pdf)')
+        && request.resource.size <= 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp|heic|heif)|application/pdf');
+      allow read: if esAdmin();
+      allow update, delete: if false;
+    }
+
+    // Archivos del curso: PRIVADOS. Nadie los lee desde el cliente; el servidor
+    // entrega URLs firmadas de 15 minutos solo a alumnos con acceso.
+    match /curso/{todo=**} {
+      allow read, write: if false;
+    }
+
+    match /{todo=**} {
+      allow read, write: if false;
+    }
+  }
+}
