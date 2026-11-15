@@ -23,14 +23,14 @@ export function Hero({ p }: { p: Precios }) {
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-base text-suave sm:text-lg lg:mx-0">{curso.subtitulo}</p>
 
-          <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:justify-center lg:justify-start">
+          <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-center lg:justify-start">
             <BotonGoogle texto="Registrarse con Google" />
+            <BotonIniciarSesion />
             <a href="#precio" className="btn-secundario text-base whitespace-nowrap">
               Ver precio · {formatoUSD(p.usd)}
             </a>
           </div>
           <BannerOferta p={p} />
-          <BotonIniciarSesion />
 
           <ul className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-suave lg:justify-start">
             {precio.pagoUnico && <li>✓ Pago único</li>}

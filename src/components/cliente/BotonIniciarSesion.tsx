@@ -44,12 +44,12 @@ export function BotonIniciarSesion() {
   const conocido = sesion?.sesion === true;
 
   return (
-    <div className="mx-auto mt-5 max-w-md lg:mx-0">
+    <div className="sm:max-w-xs">
       <button
         type="button"
         onClick={entrar}
         disabled={cargando}
-        className="group flex w-full items-center gap-3 rounded-2xl border border-marca-2/30 bg-linear-to-r from-marca-2/10 via-marca/10 to-acento/10 px-4 py-3 text-left transition hover:border-marca-2/60 hover:from-marca-2/20 hover:via-marca/20 hover:to-acento/20 active:scale-[.99] disabled:opacity-70"
+        className="group flex w-full items-center gap-3 rounded-full border border-marca-2/30 bg-linear-to-r from-marca-2/10 via-marca/10 to-acento/10 py-2 pr-2 pl-2.5 text-left transition hover:border-marca-2/60 hover:from-marca-2/20 hover:via-marca/20 hover:to-acento/20 active:scale-[.99] disabled:opacity-70"
       >
         {conocido && sesion.fotoURL ? (
           // eslint-disable-next-line @next/next/no-img-element
