@@ -1,0 +1,16 @@
+# Nunca subir a Vercel (secretos, contenido de pago, archivos locales)
+.env
+.env.local
+.env.*.local
+.env.vercel
+*firebase-adminsdk*.json
+service-account*.json
+arvhivos curso
+archivos curso
+src/video
+*.log
+.claude
+.next
+.next-emuladores
+node_modules
+tsconfig.tsbuildinfo

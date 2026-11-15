@@ -1,6 +1,7 @@
 import { curso, precio, formatoUSD } from "@/config/curso";
 import { MockupTelefono } from "./MockupTelefono";
 import { BotonGoogle } from "@/components/cliente/BotonGoogle";
+import { BotonIniciarSesion } from "@/components/cliente/BotonIniciarSesion";
 import { BannerOferta } from "./BannerOferta";
 import type { Precios } from "@/lib/precios-tipos";
 
@@ -29,12 +30,7 @@ export function Hero({ p }: { p: Precios }) {
             </a>
           </div>
           <BannerOferta p={p} />
-          <p className="mt-4 text-sm text-suave">
-            ¿Ya tienes cuenta?{" "}
-            <a href="/entrar" className="font-semibold text-marca-2 hover:underline">
-              Inicia sesión
-            </a>
-          </p>
+          <BotonIniciarSesion />
 
           <ul className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-suave lg:justify-start">
             {precio.pagoUnico && <li>✓ Pago único</li>}
