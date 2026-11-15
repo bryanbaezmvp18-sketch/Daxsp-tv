@@ -22,7 +22,7 @@ function cargarSdk() {
   if (window.paypal) return Promise.resolve();
   cargaSdk ??= new Promise((ok, mal) => {
     const s = document.createElement("script");
-    s.src = `https://www.paypal.com/sdk/js?client-id=${CLIENT_ID}&currency=USD&intent=capture&components=buttons&enable-funding=card&disable-funding=paylater,venmo&locale=es_XC`;
+    s.src = `https://www.paypal.com/sdk/js?client-id=${CLIENT_ID}&currency=USD&intent=capture&components=buttons&enable-funding=card&disable-funding=paylater,venmo`; // sin «locale»: PayPal usa el idioma del navegador (es_XC ya no lo acepta → error 400)
     s.onload = () => ok();
     s.onerror = () => {
       cargaSdk = null;
