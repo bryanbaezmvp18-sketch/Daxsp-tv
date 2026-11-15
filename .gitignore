@@ -25,3 +25,6 @@ src/video/
 
 # Configuración local del editor/asistente
 .claude/
+
+# Variables para pegar en Vercel (contiene secretos)
+.env.vercel
