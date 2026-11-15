@@ -15,6 +15,7 @@ const FILTROS = [
   { valor: "pendiente", texto: "Pendientes" },
   { valor: "aprobado", texto: "Aprobados" },
   { valor: "rechazado", texto: "Rechazados" },
+  { valor: "retirado", texto: "Acceso retirado" },
   { valor: "todos", texto: "Todos" },
 ] as const;
 
@@ -52,6 +53,10 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       fechaTransferencia: p.fechaTransferencia ?? "",
       referencia: p.referencia ?? "",
       motivoRechazo: p.motivoRechazo ?? "",
+      motivoRetiro: p.motivoRetiro ?? "",
+      creadoMs: (p.creadoEn as Timestamp | undefined)?.toMillis() ?? 0,
+      retiradoEn: fecha(p.retiradoEn),
+      retiradoPor: p.retiradoPor ?? "",
       fotos: ((p.comprobantes as string[] | undefined) ?? [p.comprobanteRuta].filter(Boolean)).length,
       bancoDestino: p.bancoDestino ?? "",
       nota: p.nota ?? "",
@@ -65,7 +70,16 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     };
   });
 
-  const visibles = estado === "todos" ? todos : todos.filter((p) => p.estado === estado);
+  const filtrados = estado === "todos" ? todos : todos.filter((p) => p.estado === estado);
+  // Pendientes: el que más lleva esperando primero (cola de revisión). El resto: lo más reciente primero.
+  const visibles = estado === "pendiente" ? [...filtrados].sort((a, b) => a.creadoMs - b.creadoMs) : filtrados;
+  const AYUDA: Record<string, string> = {
+    pendiente: "Ordenados por antigüedad: el que más lleva esperando aparece primero.",
+    aprobado: "Clientes con el curso desbloqueado. Desde aquí puedes quitarles el acceso.",
+    rechazado: "Pagos que no se pudieron confirmar. El cliente puede enviar otro comprobante.",
+    retirado: "Clientes a los que se les quitó el acceso. Puedes devolvérselo cuando quieras.",
+    todos: "Todos los pedidos, del más reciente al más antiguo.",
+  };
   const aprobados = todos.filter((p) => p.estado === "aprobado");
   const conteo = (e: string) => (e === "todos" ? todos.length : todos.filter((p) => p.estado === e).length);
   const sumar = (m: string) => aprobados.filter((p) => p.moneda === m).reduce((n, p) => n + Number(p.monto || 0), 0);
@@ -108,9 +122,13 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           ))}
         </nav>
 
-        <section className="mt-4 space-y-3">
+        <p className="mt-3 text-sm text-suave">{AYUDA[estado]}</p>
+
+        <section className="mt-4 space-y-2">
           {visibles.length === 0 ? (
-            <p className="tarjeta p-8 text-center text-suave">No hay pedidos en esta lista.</p>
+            <p className="tarjeta p-8 text-center text-suave">
+              {estado === "pendiente" ? "🎉 No hay pagos por revisar. ¡Todo al día!" : "No hay pedidos en esta lista."}
+            </p>
           ) : (
             visibles.map((p) => <TarjetaPedido key={p.id} p={p} recienAprobado={p.id === nuevo} />)
           )}

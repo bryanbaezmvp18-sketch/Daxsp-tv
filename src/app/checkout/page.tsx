@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 export default async function CheckoutPage() {
   // Sin cuenta de Google no se puede pagar
   const cliente = await requerirCliente("/checkout");
-  if (cliente.estadoCompra === "pendiente" || cliente.estadoCompra === "aprobado") redirect("/mi-cuenta");
+  if (cliente.estadoCompra === "pendiente" || cliente.estadoCompra === "aprobado" || cliente.estadoCompra === "retirado") redirect("/mi-cuenta");
   const [cuentas, p] = await Promise.all([obtenerCuentas({ soloActivas: true }).then((c) => c.map(aPublica)), obtenerPrecios()]);
   return (
     <>

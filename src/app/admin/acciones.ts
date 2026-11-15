@@ -82,12 +82,80 @@ export async function renovarEnlace(alumnoId: string): Promise<Resultado> {
   return { ok: true, enlace: enlaceAcceso(token) };
 }
 
-/** Quita el acceso (p. ej. si se devolvió el dinero). */
-export async function quitarAcceso(alumnoId: string): Promise<Resultado> {
-  await requerirAdmin();
-  const ref = adminDb().collection("alumnos").doc(alumnoId);
-  if (!(await ref.get()).exists) return { ok: false, error: "No se encontró el alumno." };
-  await ref.update({ tieneAcceso: false, tokenAcceso: null });
+/**
+ * Quita el acceso al curso de un pedido aprobado (p. ej. si se devolvió el dinero).
+ * El pedido pasa a «retirado», su cuenta de Google deja de ver el curso al instante
+ * y el enlace antiguo (si lo tenía) deja de funcionar. Se puede devolver después.
+ */
+export async function quitarAcceso(pedidoId: string, motivo = ""): Promise<Resultado> {
+  const admin = await requerirAdmin();
+  if (!idValido(pedidoId)) return { ok: false, error: "Pedido inválido" };
+  motivo = motivo.trim().slice(0, 300);
+  const db = adminDb();
+  const pedidoRef = db.collection("pedidos").doc(pedidoId);
+  try {
+    await db.runTransaction(async (tx) => {
+      const pedido = await tx.get(pedidoRef);
+      if (!pedido.exists) throw new Error("El pedido no existe.");
+      if (pedido.get("estado") !== "aprobado") throw new Error("Solo se puede quitar el acceso a un pedido aprobado.");
+      const uid = pedido.get("uid") as string | undefined;
+      const usuarioRef = uid ? db.collection("usuarios").doc(uid) : null;
+      const usuario = usuarioRef ? await tx.get(usuarioRef) : null;
+      const alumnoRef = pedido.get("alumnoId") ? db.collection("alumnos").doc(pedido.get("alumnoId")) : null;
+      const alumno = alumnoRef ? await tx.get(alumnoRef) : null;
+
+      tx.update(pedidoRef, {
+        estado: "retirado",
+        motivoRetiro: motivo || null,
+        retiradoEn: FieldValue.serverTimestamp(),
+        retiradoPor: admin.email,
+        historial: historial("retirado", motivo || `Acceso retirado por ${admin.email}`),
+      });
+      if (alumnoRef && alumno?.exists) tx.update(alumnoRef, { tieneAcceso: false, tokenAcceso: null });
+      // Solo si este es su pedido actual (no pisar una compra más nueva)
+      if (usuarioRef && usuario?.exists && (!usuario.get("pedidoActual") || usuario.get("pedidoActual") === pedidoId)) {
+        tx.update(usuarioRef, { estadoCompra: "retirado", pedidoActual: pedidoId, motivoRetiro: motivo || null });
+      }
+    });
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "No se pudo quitar el acceso." };
+  }
+  revalidatePath("/admin");
+  return { ok: true };
+}
+
+/** Devuelve el acceso a un pedido al que se le había quitado (sin volver a enviar correos). */
+export async function devolverAcceso(pedidoId: string): Promise<Resultado> {
+  const admin = await requerirAdmin();
+  if (!idValido(pedidoId)) return { ok: false, error: "Pedido inválido" };
+  const db = adminDb();
+  const pedidoRef = db.collection("pedidos").doc(pedidoId);
+  try {
+    await db.runTransaction(async (tx) => {
+      const pedido = await tx.get(pedidoRef);
+      if (!pedido.exists) throw new Error("El pedido no existe.");
+      if (pedido.get("estado") !== "retirado") throw new Error("Este pedido no tiene el acceso retirado.");
+      const uid = pedido.get("uid") as string | undefined;
+      const usuarioRef = uid ? db.collection("usuarios").doc(uid) : null;
+      const usuario = usuarioRef ? await tx.get(usuarioRef) : null;
+      const alumnoRef = pedido.get("alumnoId") ? db.collection("alumnos").doc(pedido.get("alumnoId")) : null;
+      const alumno = alumnoRef ? await tx.get(alumnoRef) : null;
+
+      tx.update(pedidoRef, {
+        estado: "aprobado",
+        motivoRetiro: null,
+        historial: historial("aprobado", `Acceso devuelto por ${admin.email}`),
+      });
+      if (alumnoRef && alumno?.exists) {
+        tx.update(alumnoRef, { tieneAcceso: true, tokenAcceso: alumno.get("tokenAcceso") || generarToken() });
+      }
+      if (usuarioRef && usuario?.exists) {
+        tx.update(usuarioRef, { estadoCompra: "aprobado", pedidoActual: pedidoId, motivoRetiro: null });
+      }
+    });
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "No se pudo devolver el acceso." };
+  }
   revalidatePath("/admin");
   return { ok: true };
 }

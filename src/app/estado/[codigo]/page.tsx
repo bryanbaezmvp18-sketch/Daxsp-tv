@@ -39,7 +39,7 @@ export default async function EstadoPage({ params }: { params: Promise<{ codigo:
       {p.estado === "pendiente" && <ActualizarSolo segundos={20} />}
       <main className="mx-auto max-w-lg px-4 py-10 sm:py-14">
         {/* Progreso */}
-        {p.estado !== "rechazado" && (
+        {p.estado !== "rechazado" && p.estado !== "retirado" && (
           <ol className="mb-8 grid grid-cols-3 gap-2 text-center text-xs" aria-label="Progreso de tu pago">
             {PASOS.map((t, i) => (
               <li key={t} aria-current={i === paso ? "step" : undefined}>
@@ -89,6 +89,13 @@ export default async function EstadoPage({ params }: { params: Promise<{ codigo:
               <Link href="/checkout" className="btn-primario mt-6 w-full text-base">
                 Enviar nuevo comprobante
               </Link>
+            </>
+          )}
+          {p.estado === "retirado" && (
+            <>
+              <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-red-400/15 text-3xl" aria-hidden>🔒</div>
+              <h1 className="mt-4 font-display text-2xl font-bold">Tu acceso al curso fue retirado</h1>
+              <p className="mt-2 text-sm text-suave">Si crees que es un error, escríbenos y lo revisamos.</p>
             </>
           )}
         </section>

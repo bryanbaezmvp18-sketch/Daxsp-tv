@@ -4,7 +4,7 @@ import { adminDb } from "@/lib/firebase/admin";
 
 export interface MiPedido {
   id: string;
-  estado: "pendiente" | "aprobado" | "rechazado";
+  estado: "pendiente" | "aprobado" | "rechazado" | "retirado";
   metodo: "transferencia" | "paypal";
   monto: number;
   moneda: string;
@@ -12,6 +12,7 @@ export interface MiPedido {
   bancoDestino: string;
   fotos: number;
   motivoRechazo: string;
+  motivoRetiro: string;
   enviado: string | null;
   aprobado: string | null;
 }
@@ -37,6 +38,7 @@ export async function miPedido(uid: string): Promise<MiPedido | null> {
     bancoDestino: p.bancoDestino ?? "",
     fotos: (p.comprobantes as string[] | undefined)?.length ?? 0,
     motivoRechazo: p.motivoRechazo ?? "",
+    motivoRetiro: p.motivoRetiro ?? "",
     enviado: fecha(p.creadoEn),
     aprobado: p.estado === "aprobado" ? fecha(p.revisadoEn) : null,
   };

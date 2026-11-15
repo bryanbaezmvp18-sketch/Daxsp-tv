@@ -1,11 +1,10 @@
 "use client";
 
-import { useConfirmar } from "./Confirmar";
-
 import { useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { aprobarPedido, quitarAcceso, rechazarPedido, renovarEnlace, verComprobante } from "@/app/admin/acciones";
+import { useConfirmar } from "./Confirmar";
+import { aprobarPedido, devolverAcceso, quitarAcceso, rechazarPedido, renovarEnlace, verComprobante } from "@/app/admin/acciones";
 import { BotonCopiar } from "@/components/checkout/BotonCopiar";
 import { curso, formatoDOP, formatoUSD } from "@/config/curso";
 
@@ -18,28 +17,34 @@ export interface PedidoVista {
   metodo: string;
   monto: number;
   moneda: string;
-  estado: "pendiente" | "aprobado" | "rechazado";
+  estado: "pendiente" | "aprobado" | "rechazado" | "retirado";
   bancoOrigen: string;
   fechaTransferencia: string;
   referencia: string;
   motivoRechazo: string;
+  motivoRetiro: string;
   fotos: number;
   bancoDestino: string;
   nota: string;
   paypalOrderId: string;
   creadoEn: string;
+  /** Milisegundos de creación, para «hace X» */
+  creadoMs: number;
   revisadoEn: string;
   revisadoPor: string;
+  retiradoEn: string;
+  retiradoPor: string;
   alumnoConAcceso: boolean;
   enlace: string | null;
   /** Cuenta de Google del cliente (si compró con ella) */
   uid: string | null;
 }
 
-const ESTILO_ESTADO = {
-  pendiente: "bg-amber-400/15 text-amber-300 border-amber-400/30",
-  aprobado: "bg-emerald-400/15 text-emerald-300 border-emerald-400/30",
-  rechazado: "bg-red-400/15 text-red-300 border-red-400/30",
+const ESTADOS = {
+  pendiente: { texto: "Pendiente", pill: "bg-amber-400/15 text-amber-300 border-amber-400/30", borde: "border-l-amber-400", avatar: "bg-amber-400/15 text-amber-300" },
+  aprobado: { texto: "Aprobado", pill: "bg-emerald-400/15 text-emerald-300 border-emerald-400/30", borde: "border-l-emerald-400", avatar: "bg-emerald-400/15 text-emerald-300" },
+  rechazado: { texto: "Rechazado", pill: "bg-red-400/15 text-red-300 border-red-400/30", borde: "border-l-red-400", avatar: "bg-red-400/15 text-red-300" },
+  retirado: { texto: "Acceso retirado", pill: "bg-zinc-400/15 text-zinc-300 border-zinc-400/30", borde: "border-l-zinc-500", avatar: "bg-zinc-400/15 text-zinc-300" },
 };
 
 /** wa.me necesita el código de país; los números dominicanos de 10 dígitos llevan 1 delante. */
@@ -52,19 +57,45 @@ function enlaceWhatsApp(numero: string, texto: string) {
   return `https://wa.me/${numeroWhatsApp(numero)}?text=${encodeURIComponent(texto)}`;
 }
 
+/** «hace 5 min», «hace 3 h», «hace 2 días» */
+function haceCuanto(ms: number) {
+  if (!ms) return "";
+  const min = Math.max(0, Math.round((Date.now() - ms) / 60000));
+  if (min < 1) return "ahora mismo";
+  if (min < 60) return `hace ${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `hace ${h} h`;
+  const d = Math.round(h / 24);
+  return `hace ${d} ${d === 1 ? "día" : "días"}`;
+}
+
+function Dato({ t, v, mono = false }: { t: string; v: React.ReactNode; mono?: boolean }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-[11px] tracking-wider text-suave uppercase">{t}</dt>
+      <dd className={`mt-0.5 truncate font-medium ${mono ? "font-mono text-sm" : ""}`}>{v || "—"}</dd>
+    </div>
+  );
+}
+
 export function TarjetaPedido({ p, recienAprobado = false }: { p: PedidoVista; recienAprobado?: boolean }) {
   const router = useRouter();
   const [pendiente, iniciar] = useTransition();
   const confirmar = useConfirmar();
   const [aviso, setAviso] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
   const [enlace, setEnlace] = useState(p.enlace);
-  const [rechazando, setRechazando] = useState(false);
+  const [formulario, setFormulario] = useState<null | "rechazar" | "quitar">(null);
   const [motivo, setMotivo] = useState("");
   const [comprobante, setComprobante] = useState<string | null>(null);
+  // Cerrado por defecto (solo nombre y correo); abierto si se acaba de aprobar
+  const [abierto, setAbierto] = useState(recienAprobado);
 
+  const e = ESTADOS[p.estado] ?? ESTADOS.pendiente;
   const primerNombre = p.nombre.split(" ")[0];
-  const mensajeAcceso = (url: string) =>
-    `¡Hola ${primerNombre}! 🎉 Confirmamos tu pago de ${curso.nombre}.\n\nEste es tu enlace personal para entrar al curso (guárdalo y no lo compartas):\n${url}`;
+  const sitio = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
+  const monto = p.moneda === "USD" ? formatoUSD(p.monto) : formatoDOP(p.monto);
+  const espera = p.estado === "pendiente" ? haceCuanto(p.creadoMs) : "";
+  const esperaLarga = p.estado === "pendiente" && p.creadoMs > 0 && Date.now() - p.creadoMs > 24 * 3600_000;
 
   function ejecutar(fn: () => Promise<{ ok: boolean; error?: string; enlace?: string; correoEnviado?: boolean }>, exito: string) {
     setAviso(null);
@@ -76,6 +107,7 @@ export function TarjetaPedido({ p, recienAprobado = false }: { p: PedidoVista; r
         tipo: "ok",
         texto: exito + (r.correoEnviado === false ? " (el correo no se envió: Resend aún no está configurado; usa WhatsApp)" : ""),
       });
+      router.refresh();
     });
   }
 
@@ -87,216 +119,312 @@ export function TarjetaPedido({ p, recienAprobado = false }: { p: PedidoVista; r
     });
   }
 
-  const monto = p.moneda === "USD" ? formatoUSD(p.monto) : formatoDOP(p.monto);
+  async function aprobar() {
+    if (!(await confirmar({ titulo: "¿Aprobar este pago?", mensaje: `Confirmas que recibiste ${monto} de ${p.nombre}. Se le dará acceso al curso.`, boton: "Sí, aprobar" }))) return;
+    ejecutar(async () => {
+      const r = await aprobarPedido(p.id);
+      if (r.ok) router.push(`/admin?estado=aprobado&nuevo=${p.id}${r.correoEnviado ? "&correo=1" : ""}#pedido-${p.id}`);
+      return r;
+    }, "Pago aprobado y acceso liberado.");
+  }
+
+  async function devolver() {
+    if (!(await confirmar({ titulo: "¿Devolver el acceso?", mensaje: `${p.nombre} podrá volver a ver el curso en «Mi cuenta».`, boton: "Devolver acceso" }))) return;
+    ejecutar(() => devolverAcceso(p.id), "Acceso devuelto.");
+  }
+
+  function abrirFormulario(f: "rechazar" | "quitar") {
+    setMotivo("");
+    setAviso(null);
+    setFormulario((actual) => (actual === f ? null : f));
+  }
+
+  const btnBase = "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition disabled:opacity-60";
 
   return (
     <article
       id={`pedido-${p.id}`}
-      className={`tarjeta scroll-mt-24 p-4 sm:p-5 ${recienAprobado ? "border-emerald-400/60 ring-2 ring-emerald-400/30" : ""}`}
+      className={`tarjeta scroll-mt-24 overflow-hidden border-l-4 ${e.borde} ${recienAprobado ? "ring-2 ring-emerald-400/40" : ""}`}
     >
       {recienAprobado && (
-        <p className="mb-3 rounded-lg bg-emerald-400/10 px-3 py-2 text-sm text-emerald-300">
+        <p className="border-b border-emerald-400/20 bg-emerald-400/10 px-5 py-2.5 text-sm text-emerald-300">
           ✅ Pago aprobado y acceso liberado.{" "}
-          {p.uid ? (
-            <>El curso ya aparece en <b>«Mi cuenta»</b> del cliente. Si quieres, avísale por WhatsApp.</>
-          ) : (
-            <><b>Ahora envíale su enlace por WhatsApp</b> con el botón verde de abajo.</>
-          )}
+          {p.uid ? <>El curso ya aparece en <b>«Mi cuenta»</b> del cliente.</> : <><b>Envíale su enlace por WhatsApp</b> con el botón verde.</>}
         </p>
       )}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
+
+      {/* ── Fila compacta: nombre + correo (clic para ver todo) ── */}
+      <button
+        type="button"
+        onClick={() => setAbierto((a) => !a)}
+        aria-expanded={abierto}
+        aria-controls={`detalle-${p.id}`}
+        className="flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-white/[.03]"
+      >
+        <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-full font-display text-lg font-bold ${e.avatar}`} aria-hidden>
+          {p.nombre.charAt(0).toUpperCase()}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-display text-base font-semibold sm:text-lg">{p.nombre}</span>
+          <span className="block truncate text-sm text-suave">{p.email}</span>
+        </span>
+        {espera && (
+          <span
+            suppressHydrationWarning
+            className={`hidden shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold sm:inline ${esperaLarga ? "bg-red-400/15 text-red-300" : "bg-amber-400/15 text-amber-300"}`}
+          >
+            ⏳ {espera.replace("hace ", "")}
+          </span>
+        )}
+        <svg
+          aria-hidden
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          className={`h-5 w-5 shrink-0 text-suave transition-transform duration-200 ${abierto ? "rotate-180" : ""}`}
+        >
+          <path d="M5.3 7.3a1 1 0 0 1 1.4 0L10 10.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 0 1 0-1.4z" />
+        </svg>
+      </button>
+
+      {abierto && (
+      <div id={`detalle-${p.id}`} className="border-t border-borde/60">
+      {/* ── Resumen: estado, método, contacto y monto ── */}
+      <div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-4 pb-4">
+        <div className="min-w-0 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-semibold">{p.nombre}</h2>
-            <span className={`rounded-full border px-2 py-0.5 text-xs font-semibold capitalize ${ESTILO_ESTADO[p.estado]}`}>
-              {p.estado}
+            <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${e.pill}`}>{e.texto}</span>
+            <span className="rounded-full border border-borde px-2.5 py-0.5 text-xs text-suave">
+              {p.metodo === "paypal" ? "💳 Tarjeta / PayPal" : "🏦 Transferencia"}
             </span>
-            <span className="rounded-full border border-borde px-2 py-0.5 text-xs text-suave capitalize">{p.metodo}</span>
+            {espera && (
+              <span suppressHydrationWarning className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${esperaLarga ? "bg-red-400/15 text-red-300" : "bg-amber-400/15 text-amber-300"}`}>
+                ⏳ Esperando {espera.replace("hace ", "")}
+              </span>
+            )}
           </div>
-          <p className="mt-1 truncate text-sm text-suave">
-            {p.email} · {p.whatsapp}
-          </p>
+          {p.whatsapp && (
+            <a href={enlaceWhatsApp(p.whatsapp, `Hola ${primerNombre}`)} target="_blank" rel="noopener noreferrer" className="inline-block text-sm text-suave hover:text-texto">
+              📱 {p.whatsapp}
+            </a>
+          )}
         </div>
         <div className="text-right">
-          <div className="font-display text-xl font-bold">{monto}</div>
+          <div className="font-display text-2xl font-bold">{monto}</div>
           <div className="text-xs text-suave">{p.creadoEn}</div>
         </div>
       </div>
 
-      {p.metodo === "transferencia" && (
-        <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 rounded-xl bg-white/[.03] p-3 text-sm sm:grid-cols-4">
-          <div><dt className="text-xs text-suave">Pagó a</dt><dd>{p.bancoDestino || "—"}</dd></div>
-          <div><dt className="text-xs text-suave">Desde</dt><dd>{p.bancoOrigen}</dd></div>
-          <div><dt className="text-xs text-suave">Fecha</dt><dd>{p.fechaTransferencia}</dd></div>
-          <div><dt className="text-xs text-suave">Referencia</dt><dd className="font-mono break-all">{p.referencia || "—"}</dd></div>
-          {p.nota && <div className="col-span-full"><dt className="text-xs text-suave">Nota del cliente</dt><dd>{p.nota}</dd></div>}
-        </dl>
-      )}
-      {p.metodo === "paypal" && (
-        <p className="mt-4 rounded-xl bg-white/[.03] p-3 text-sm">
-          💳 Pagado con tarjeta/PayPal · Orden <span className="font-mono">{p.paypalOrderId}</span> · acceso automático
-        </p>
-      )}
-
-      {p.estado === "rechazado" && p.motivoRechazo && (
-        <p className="mt-3 text-sm text-red-300">Motivo: {p.motivoRechazo}</p>
-      )}
-      {p.revisadoPor && (
-        <p className="mt-2 text-xs text-suave">Revisado por {p.revisadoPor} · {p.revisadoEn}</p>
-      )}
-
-      {/* Acciones */}
-      <div className="mt-4 flex flex-wrap gap-2">
-        {Array.from({ length: p.fotos }, (_, i) => (
-          <button key={i} onClick={() => abrirComprobante(i)} disabled={pendiente} className="btn-secundario px-4! py-2! text-sm">
-            🧾 {p.fotos > 1 ? `Foto ${i + 1}` : "Ver comprobante"}
-          </button>
-        ))}
-        {p.estado !== "aprobado" && !enlace && (
-          <>
-            <button
-              onClick={async () => {
-                if (await confirmar({ titulo: "¿Aprobar este pago?", mensaje: `Confirmas que recibiste ${monto} de ${p.nombre}. Se le dará acceso al curso.`, boton: "Sí, aprobar" }))
-                  ejecutar(async () => {
-                    const r = await aprobarPedido(p.id);
-                    // Lleva a "Aprobados" con este pedido resaltado para enviarle el enlace
-                    if (r.ok) router.push(`/admin?estado=aprobado&nuevo=${p.id}${r.correoEnviado ? "&correo=1" : ""}#pedido-${p.id}`);
-                    return r;
-                  }, "Pago aprobado y acceso liberado.");
-              }}
-              disabled={pendiente}
-              className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-black transition hover:bg-emerald-400 disabled:opacity-60"
-            >
-              ✓ Aprobar y dar acceso
-            </button>
-            {p.estado === "pendiente" && (
-              <button onClick={() => setRechazando((r) => !r)} disabled={pendiente} className="rounded-full border border-red-400/40 px-4 py-2 text-sm font-semibold text-red-300 hover:bg-red-400/10">
-                ✕ Rechazar
-              </button>
+      {/* ── Datos del pago + comprobante ── */}
+      <div className="grid gap-3 px-5 sm:grid-cols-[1fr_auto]">
+        {p.metodo === "paypal" ? (
+          <div className="rounded-xl bg-white/[.03] p-4 text-sm">
+            <Dato t="Orden PayPal" v={p.paypalOrderId} mono />
+            <p className="mt-2 text-xs text-suave">Pago automático con tarjeta/PayPal.</p>
+          </div>
+        ) : (
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-xl bg-white/[.03] p-4 sm:grid-cols-4">
+            <Dato t="Pagó a" v={p.bancoDestino} />
+            <Dato t="Desde" v={p.bancoOrigen} />
+            <Dato t="Fecha" v={p.fechaTransferencia} />
+            <Dato t="Referencia" v={p.referencia} mono />
+            {p.nota && (
+              <div className="col-span-full">
+                <dt className="text-[11px] tracking-wider text-suave uppercase">Nota del cliente</dt>
+                <dd className="mt-0.5 text-sm">{p.nota}</dd>
+              </div>
             )}
-          </>
+          </dl>
+        )}
+
+        {p.fotos > 0 && (
+          <div className="flex flex-row gap-2 sm:flex-col">
+            {Array.from({ length: p.fotos }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => abrirComprobante(i)}
+                disabled={pendiente}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-borde bg-white/[.03] px-4 py-3 text-sm font-semibold transition hover:border-marca-2/50 hover:bg-white/[.06]"
+              >
+                🧾 {p.fotos > 1 ? `Comprobante ${i + 1}` : "Ver comprobante"}
+              </button>
+            ))}
+          </div>
         )}
       </div>
 
-      {rechazando && (
-        <form
-          className="mt-3 space-y-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            ejecutar(async () => {
-              const r = await rechazarPedido(p.id, motivo);
-              if (r.ok) setRechazando(false);
-              return r;
-            }, "Pedido rechazado.");
-          }}
-        >
-          <label className="block text-sm">
-            Motivo del rechazo (lo verá el cliente)
-            <textarea
-              value={motivo}
-              onChange={(e) => setMotivo(e.target.value)}
-              required
-              minLength={5}
-              maxLength={300}
-              rows={2}
-              placeholder="Ej. El monto no coincide / No encontramos la transferencia con esa referencia"
-              className="mt-1 w-full rounded-xl border border-borde bg-fondo px-3 py-2 outline-none focus:border-red-400"
-            />
-          </label>
-          <div className="flex flex-wrap gap-2">
-            <button disabled={pendiente} className="rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">Confirmar rechazo</button>
-            {p.whatsapp && motivo.length >= 5 && (
+      {/* ── Estado y acciones ── */}
+      <div className="p-5 pt-4">
+        {p.estado === "pendiente" && (
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-400/25 bg-amber-400/5 p-3">
+            <p className="mr-auto text-sm text-amber-200">Revisa el comprobante y confirma si el dinero llegó.</p>
+            <button onClick={aprobar} disabled={pendiente} className={`${btnBase} bg-emerald-500 text-black hover:bg-emerald-400`}>
+              ✓ Aprobar y dar acceso
+            </button>
+            <button onClick={() => abrirFormulario("rechazar")} disabled={pendiente} className={`${btnBase} border border-red-400/40 text-red-300 hover:bg-red-400/10`}>
+              ✕ Rechazar
+            </button>
+          </div>
+        )}
+
+        {p.estado === "rechazado" && (
+          <div className="rounded-xl border border-red-400/25 bg-red-400/5 p-3 text-sm">
+            <p className="font-semibold text-red-300">Pago rechazado</p>
+            {p.motivoRechazo && <p className="mt-1 text-suave">Motivo: {p.motivoRechazo}</p>}
+          </div>
+        )}
+
+        {p.estado === "aprobado" && (
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-emerald-400/25 bg-emerald-400/5 p-3">
+            <div className="mr-auto min-w-0">
+              <p className="text-sm font-semibold text-emerald-300">🎓 {p.uid ? "Curso desbloqueado en su cuenta" : "Tiene acceso con enlace personal"}</p>
+              <p className="text-xs text-suave">
+                {p.uid ? "Lo ve al entrar con su Google en «Mi cuenta»." : "Pedido antiguo: entra con el enlace de abajo."}
+              </p>
+            </div>
+            {p.uid && p.whatsapp && (
               <a
-                href={enlaceWhatsApp(p.whatsapp, `Hola ${primerNombre}, revisamos tu comprobante de ${curso.nombre} y no pudimos confirmarlo: ${motivo}\n\nPuedes enviarlo de nuevo aquí: ${location.origin}/checkout`)}
+                href={enlaceWhatsApp(p.whatsapp, `¡Hola ${primerNombre}! 🎉 Confirmamos tu pago de ${curso.nombre}.\n\nYa tienes el curso desbloqueado: entra con tu cuenta de Google en ${sitio}/mi-cuenta`)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full border border-borde px-4 py-2 text-sm"
+                className={`${btnBase} bg-[#25D366] text-black hover:brightness-110`}
               >
-                Avisar por WhatsApp
+                Avisarle por WhatsApp
               </a>
             )}
+            <button onClick={() => abrirFormulario("quitar")} disabled={pendiente} className={`${btnBase} border border-red-400/40 text-red-300 hover:bg-red-400/10`}>
+              🔒 Quitar acceso
+            </button>
           </div>
-        </form>
-      )}
+        )}
 
-      {/* Cliente con cuenta de Google: el curso está en «Mi cuenta», sin enlaces */}
-      {p.uid && p.estado === "aprobado" && (
-        <div className="mt-4 rounded-xl border border-emerald-400/30 bg-emerald-400/5 p-3">
-          <p className="text-sm font-semibold text-emerald-300">🎓 Curso desbloqueado en su cuenta</p>
-          <p className="mt-1 text-xs text-suave">Lo ve al entrar con su Google en «Mi cuenta». No hace falta enviarle ningún enlace.</p>
-          {p.whatsapp && (
-            <a
-              href={enlaceWhatsApp(
-                p.whatsapp,
-                `¡Hola ${primerNombre}! 🎉 Confirmamos tu pago de ${curso.nombre}.
+        {p.estado === "retirado" && (
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-zinc-400/25 bg-zinc-400/5 p-3">
+            <div className="mr-auto min-w-0 text-sm">
+              <p className="font-semibold text-zinc-200">🔒 Ya no tiene acceso al curso</p>
+              {p.motivoRetiro && <p className="mt-0.5 text-suave">Motivo: {p.motivoRetiro}</p>}
+            </div>
+            <button onClick={devolver} disabled={pendiente} className={`${btnBase} bg-emerald-500 text-black hover:bg-emerald-400`}>
+              ↺ Devolver acceso
+            </button>
+          </div>
+        )}
 
-Ya tienes el curso desbloqueado: entra con tu cuenta de Google en ${(process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "")}/mi-cuenta`,
+        {/* Formulario: rechazar o quitar acceso */}
+        {formulario && (
+          <form
+            className="mt-3 space-y-3 rounded-xl border border-red-400/25 bg-red-400/5 p-4"
+            onSubmit={(ev) => {
+              ev.preventDefault();
+              if (formulario === "rechazar") {
+                ejecutar(async () => {
+                  const r = await rechazarPedido(p.id, motivo);
+                  if (r.ok) setFormulario(null);
+                  return r;
+                }, "Pedido rechazado.");
+              } else {
+                ejecutar(async () => {
+                  const r = await quitarAcceso(p.id, motivo);
+                  if (r.ok) {
+                    setFormulario(null);
+                    setEnlace(null);
+                  }
+                  return r;
+                }, "Acceso retirado.");
+              }
+            }}
+          >
+            <p className="text-sm font-semibold text-red-200">
+              {formulario === "rechazar" ? "Rechazar este pago" : `Quitar el acceso a ${primerNombre}`}
+            </p>
+            {formulario === "quitar" && (
+              <p className="text-xs text-suave">Dejará de ver el curso al instante. Podrás devolvérselo cuando quieras.</p>
+            )}
+            <label className="block text-sm">
+              {formulario === "rechazar" ? "Motivo (lo verá el cliente)" : "Motivo (opcional, lo verá el cliente)"}
+              <textarea
+                value={motivo}
+                onChange={(ev) => setMotivo(ev.target.value)}
+                required={formulario === "rechazar"}
+                minLength={formulario === "rechazar" ? 5 : undefined}
+                maxLength={300}
+                rows={2}
+                placeholder={formulario === "rechazar" ? "Ej. El monto no coincide / No encontramos la transferencia" : "Ej. Se le devolvió el dinero"}
+                className="mt-1 w-full rounded-xl border border-borde bg-fondo px-3 py-2 outline-none focus:border-red-400"
+              />
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <button disabled={pendiente} className={`${btnBase} bg-red-500 text-white hover:bg-red-400`}>
+                {formulario === "rechazar" ? "Confirmar rechazo" : "Sí, quitar acceso"}
+              </button>
+              <button type="button" onClick={() => setFormulario(null)} className={`${btnBase} border border-borde text-suave hover:text-texto`}>
+                Cancelar
+              </button>
+              {formulario === "rechazar" && p.whatsapp && motivo.length >= 5 && (
+                <a
+                  href={enlaceWhatsApp(p.whatsapp, `Hola ${primerNombre}, revisamos tu comprobante de ${curso.nombre} y no pudimos confirmarlo: ${motivo}\n\nPuedes enviarlo de nuevo aquí: ${sitio}/checkout`)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${btnBase} border border-borde`}
+                >
+                  Avisar por WhatsApp
+                </a>
               )}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 inline-block rounded-full bg-[#25D366] px-4 py-2 text-sm font-semibold text-black"
-            >
-              Avisarle por WhatsApp
-            </a>
-          )}
-        </div>
-      )}
+            </div>
+          </form>
+        )}
 
-      {/* Enlace de acceso del alumno (solo pedidos antiguos sin cuenta de Google) */}
-      {enlace && (
-        <div className="mt-4 rounded-xl border border-emerald-400/30 bg-emerald-400/5 p-3">
-          <p className="text-sm font-semibold text-emerald-300">Enlace de acceso del alumno</p>
-          <div className="mt-2 flex items-center gap-2">
-            <code className="min-w-0 flex-1 truncate rounded-lg bg-black/30 px-2 py-1.5 text-xs">{enlace}</code>
-            <BotonCopiar valor={enlace} />
+        {/* Enlace de acceso (solo pedidos antiguos sin cuenta de Google) */}
+        {enlace && p.estado === "aprobado" && (
+          <div className="mt-3 rounded-xl border border-borde bg-white/[.03] p-3">
+            <p className="text-xs tracking-wider text-suave uppercase">Enlace de acceso del alumno</p>
+            <div className="mt-2 flex items-center gap-2">
+              <code className="min-w-0 flex-1 truncate rounded-lg bg-black/30 px-2 py-1.5 text-xs">{enlace}</code>
+              <BotonCopiar valor={enlace} />
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <a
+                href={enlaceWhatsApp(p.whatsapp, `¡Hola ${primerNombre}! 🎉 Confirmamos tu pago de ${curso.nombre}.\n\nEste es tu enlace personal para entrar al curso (guárdalo y no lo compartas):\n${enlace}`)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${btnBase} bg-[#25D366] text-black`}
+              >
+                Enviar por WhatsApp
+              </a>
+              <button
+                onClick={async () => {
+                  if (await confirmar({ titulo: "¿Renovar el enlace?", mensaje: "Se creará un enlace nuevo y el anterior dejará de funcionar.", boton: "Renovar" }))
+                    ejecutar(() => renovarEnlace(p.alumnoId), "Enlace renovado.");
+                }}
+                disabled={pendiente}
+                className={`${btnBase} border border-borde text-suave hover:text-texto`}
+              >
+                Renovar enlace
+              </button>
+            </div>
           </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <a
-              href={enlaceWhatsApp(p.whatsapp, mensajeAcceso(enlace))}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-full bg-[#25D366] px-4 py-2 text-sm font-semibold text-black"
-            >
-              Enviar por WhatsApp
-            </a>
-            <button
-              onClick={async () => {
-                if (await confirmar({ titulo: "¿Renovar el enlace?", mensaje: "Se creará un enlace nuevo y el anterior dejará de funcionar.", boton: "Renovar" }))
-                  ejecutar(() => renovarEnlace(p.alumnoId), "Enlace renovado.");
-              }}
-              disabled={pendiente}
-              className="rounded-full border border-borde px-4 py-2 text-sm text-suave hover:text-texto"
-            >
-              Renovar enlace
-            </button>
-            <button
-              onClick={async () => {
-                if (await confirmar({ titulo: "¿Quitar el acceso?", mensaje: `${p.nombre} ya no podrá entrar al curso.`, boton: "Quitar acceso", peligro: true }))
-                  ejecutar(async () => {
-                    const r = await quitarAcceso(p.alumnoId);
-                    if (r.ok) setEnlace(null);
-                    return r;
-                  }, "Acceso retirado.");
-              }}
-              disabled={pendiente}
-              className="rounded-full border border-red-400/30 px-4 py-2 text-sm text-red-300 hover:bg-red-400/10"
-            >
-              Quitar acceso
-            </button>
-          </div>
-        </div>
-      )}
+        )}
 
-      {aviso && (
-        <p role="status" className={`mt-3 text-sm ${aviso.tipo === "ok" ? "text-emerald-300" : "text-red-300"}`}>
-          {aviso.texto}
-        </p>
+        {aviso && (
+          <p role="status" className={`mt-3 text-sm ${aviso.tipo === "ok" ? "text-emerald-300" : "text-red-300"}`}>
+            {aviso.texto}
+          </p>
+        )}
+
+        {/* Quién lo revisó */}
+        {(p.revisadoPor || p.retiradoPor) && (
+          <p className="mt-3 border-t border-borde/60 pt-3 text-xs text-suave">
+            {p.revisadoPor && <>Revisado por {p.revisadoPor} · {p.revisadoEn}</>}
+            {p.retiradoPor && p.estado === "retirado" && <> · Acceso retirado por {p.retiradoPor} · {p.retiradoEn}</>}
+          </p>
+        )}
+      </div>
+      </div>
       )}
 
       {/* Visor del comprobante */}
       {comprobante && createPortal(
         <div className="fixed inset-0 z-[90] grid place-items-center bg-black/85 p-4" onClick={() => setComprobante(null)} role="dialog" aria-label="Comprobante">
-          <div className="relative flex max-h-full w-full max-w-3xl flex-col" onClick={(e) => e.stopPropagation()}>
+          <div className="relative flex max-h-full w-full max-w-3xl flex-col" onClick={(ev) => ev.stopPropagation()}>
             <div className="mb-2 flex justify-between gap-2">
               <a href={comprobante} target="_blank" rel="noopener noreferrer" className="rounded-full bg-white/10 px-4 py-2 text-sm">Abrir en pestaña nueva</a>
               <button onClick={() => setComprobante(null)} className="rounded-full bg-white/10 px-4 py-2 text-sm">Cerrar ✕</button>

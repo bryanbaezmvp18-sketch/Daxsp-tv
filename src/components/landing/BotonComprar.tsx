@@ -28,9 +28,12 @@ export function BotonComprar({
   compacto = false,
   icono = !compacto,
   tachado = true,
+  reloj = true,
   className = "",
   onClick,
 }: {
+  /** false = sin la pastilla del cronómetro (p. ej. si ya hay un cronómetro grande al lado) */
+  reloj?: boolean;
   p: Precios;
   texto?: string;
   href?: string;
@@ -41,7 +44,7 @@ export function BotonComprar({
   onClick?: () => void;
 }) {
   const pct = descuento(p);
-  const fin = p.oferta.activa ? p.oferta.terminaEn : null;
+  const fin = reloj && p.oferta.activa ? p.oferta.terminaEn : null;
   const restante = useRestante(fin);
   const conReloj = restante !== null && restante > 0;
 

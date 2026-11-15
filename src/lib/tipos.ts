@@ -11,7 +11,7 @@ export interface Alumno {
 }
 
 export type MetodoPago = "paypal" | "transferencia";
-export type EstadoPedido = "pendiente" | "aprobado" | "rechazado";
+export type EstadoPedido = "pendiente" | "aprobado" | "rechazado" | "retirado";
 
 /** pedidos/{id} */
 export interface Pedido {

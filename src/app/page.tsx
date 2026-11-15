@@ -3,6 +3,7 @@ import { BarraOferta } from "@/components/landing/BarraOferta";
 import { Navbar } from "@/components/landing/Navbar";
 import { Hero } from "@/components/landing/Hero";
 import { VideoIntro } from "@/components/landing/VideoIntro";
+import { PopupOferta } from "@/components/landing/PopupOferta";
 import {
   Beneficios,
   ComoFunciona,
@@ -30,6 +31,7 @@ export default async function Home() {
   return (
     <>
       <VideoIntro />
+      <PopupOferta p={p} />
       <BarraOferta p={p} />
       <Navbar p={p} />
       <main>

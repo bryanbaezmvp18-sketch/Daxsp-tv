@@ -12,6 +12,10 @@ const VIDEO = "/video/intro.mp4";
  */
 let yaVistoEnEstaCarga = false;
 
+/** Evento que avisa de que el video terminó y ya se ve el menú principal. */
+export const EVENTO_INTRO_FIN = "daxsp:intro-fin";
+export const introTerminada = () => yaVistoEnEstaCarga;
+
 /**
  * Pantalla completa con el video de entrada. Al terminar el video,
  * se desvanece y aparece la página principal. Si el video falla, se muestra la página.
@@ -45,7 +49,10 @@ export function VideoIntro() {
     yaVistoEnEstaCarga = true;
     document.documentElement.style.overflow = "";
     setEstado("saliendo");
-    setTimeout(() => setEstado("fuera"), 700);
+    setTimeout(() => {
+      setEstado("fuera");
+      window.dispatchEvent(new Event(EVENTO_INTRO_FIN));
+    }, 700);
   }
 
   function activarSonido() {

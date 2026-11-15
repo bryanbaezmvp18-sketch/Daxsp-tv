@@ -12,7 +12,7 @@ import { adminAuth, adminDb } from "@/lib/firebase/admin";
 export const COOKIE_CLIENTE = "daxsp_cliente";
 export const DURACION_CLIENTE_MS = 1000 * 60 * 60 * 24 * 14; // 14 días (máximo que permite Firebase)
 
-export type EstadoCompra = "sin_compra" | "pendiente" | "aprobado" | "rechazado";
+export type EstadoCompra = "sin_compra" | "pendiente" | "aprobado" | "rechazado" | "retirado";
 
 export interface ClienteSesion {
   uid: string;

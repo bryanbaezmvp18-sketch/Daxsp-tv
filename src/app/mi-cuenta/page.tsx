@@ -20,6 +20,7 @@ const ETIQUETA = {
   pendiente: { texto: "En revisión", color: "bg-amber-400/15 text-amber-300" },
   aprobado: { texto: "Aprobado", color: "bg-emerald-400/15 text-emerald-300" },
   rechazado: { texto: "Rechazado", color: "bg-red-400/15 text-red-300" },
+  retirado: { texto: "Acceso retirado", color: "bg-red-400/15 text-red-300" },
 };
 
 /** Módulo del cliente: estado de su compra + su curso (cuando está aprobado). */
@@ -41,7 +42,8 @@ export default async function MiCuentaPage() {
       <CabeceraSimple>
         <BotonSalirCliente />
       </CabeceraSimple>
-      {c.estadoCompra !== "aprobado" && <EscuchaEstado uid={c.uid} estadoInicial={c.estadoCompra} />}
+      {/* Se actualiza sola si el admin aprueba, rechaza o quita el acceso */}
+      <EscuchaEstado uid={c.uid} estadoInicial={c.estadoCompra} />
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:py-10">
         {/* Perfil */}
@@ -88,6 +90,13 @@ export default async function MiCuentaPage() {
                 <p className="font-display text-lg font-bold">⚠️ No pudimos confirmar tu pago</p>
                 {pedido?.motivoRechazo && <p className="mt-2 rounded-xl bg-white/5 px-4 py-3 text-sm">Motivo: {pedido.motivoRechazo}</p>}
                 <Link href="/checkout" className="btn-primario mt-4">Enviar nuevo comprobante</Link>
+              </>
+            )}
+            {c.estadoCompra === "retirado" && (
+              <>
+                <p className="font-display text-lg font-bold">🔒 Tu acceso al curso fue retirado</p>
+                {pedido?.motivoRetiro && <p className="mt-2 rounded-xl bg-white/5 px-4 py-3 text-sm">Motivo: {pedido.motivoRetiro}</p>}
+                <p className="mt-2 text-sm text-suave">Si crees que es un error, escríbenos y lo revisamos.</p>
               </>
             )}
             {aprobado && (
@@ -144,7 +153,9 @@ export default async function MiCuentaPage() {
               <div aria-hidden className="absolute inset-0 bg-[repeating-linear-gradient(135deg,transparent,transparent_12px,rgba(255,255,255,.02)_12px,rgba(255,255,255,.02)_24px)]" />
               <div className="relative">
                 <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-white/5 text-3xl" aria-hidden>🔒</div>
-                <p className="mt-4 font-semibold">Tu curso se desbloquea cuando se apruebe tu pago</p>
+                <p className="mt-4 font-semibold">
+                  {c.estadoCompra === "retirado" ? "Tu curso está bloqueado" : "Tu curso se desbloquea cuando se apruebe tu pago"}
+                </p>
                 <p className="mt-1 text-sm text-suave">Guía paso a paso, kit para Claude, plantillas y videos.</p>
               </div>
             </div>

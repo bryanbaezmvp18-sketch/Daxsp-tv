@@ -3,7 +3,7 @@ import type { Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 
 export interface EstadoPedido {
-  estado: "pendiente" | "aprobado" | "rechazado";
+  estado: "pendiente" | "aprobado" | "rechazado" | "retirado";
   nombre: string;
   monto: number;
   moneda: string;

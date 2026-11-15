@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
   const sesion = await clienteActual();
   if (!sesion) return NextResponse.json({ error: "Entra con tu cuenta de Google para pagar." }, { status: 401 });
-  if (sesion.estadoCompra === "pendiente" || sesion.estadoCompra === "aprobado") {
+  if (sesion.estadoCompra === "pendiente" || sesion.estadoCompra === "aprobado" || sesion.estadoCompra === "retirado") {
     return NextResponse.json({ error: "Ya tienes un pago registrado. Revisa «Mi cuenta»." }, { status: 409 });
   }
 

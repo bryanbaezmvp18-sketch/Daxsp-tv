@@ -77,6 +77,50 @@ body {
   animation: tic-numero 0.35s ease-out;
 }
 
+/* Línea de estado del cliente: se va «cargando» paso a paso */
+@keyframes linea-carga {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.linea-carga {
+  transform-origin: left;
+  animation: linea-carga 0.45s ease-out both;
+}
+@keyframes paso-carga {
+  0% { transform: scale(0.4); opacity: 0; }
+  70% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.paso-carga {
+  animation: paso-carga 0.4s ease-out both;
+}
+@keyframes paso-texto {
+  from { opacity: 0.35; }
+  to { opacity: 1; }
+}
+.paso-texto {
+  animation: paso-texto 0.4s ease-out both;
+}
+/* Ventana de oferta: aparece con un pequeño salto */
+@keyframes popup-entrada {
+  0% { transform: translateY(24px) scale(0.92); opacity: 0; }
+  70% { transform: translateY(-4px) scale(1.01); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.popup-entrada {
+  animation: popup-entrada 0.5s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes popup-entrada-fondo {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.popup-entrada-fondo {
+  animation: popup-entrada-fondo 0.3s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .linea-carga, .paso-carga, .paso-texto, .popup-entrada, .popup-entrada-fondo { animation: none; }
+}
+
 details > summary::-webkit-details-marker {
   display: none;
 }
