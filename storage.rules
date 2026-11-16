@@ -24,6 +24,12 @@ service firebase.storage {
       allow read, write: if false;
     }
 
+    // Solo el ADMIN puede subir archivos nuevos del curso desde el panel
+    // (Panel → Curso). Máximo 1 GB. Nadie puede leerlos desde el cliente.
+    match /curso/materiales/{archivo} {
+      allow create: if esAdmin() && request.resource.size <= 1024 * 1024 * 1024;
+    }
+
     match /{todo=**} {
       allow read, write: if false;
     }

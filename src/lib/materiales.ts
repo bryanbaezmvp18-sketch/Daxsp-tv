@@ -1,9 +1,10 @@
 import "server-only";
 import { adminDb } from "@/lib/firebase/admin";
+import type { TipoMaterial } from "@/lib/materiales-tipos";
 
-export type TipoMaterial = "guia" | "kit" | "plantilla" | "video" | "documento";
+export type { TipoMaterial };
 
-/** materiales/{id}: archivos del curso subidos con `npm run subir-curso`. */
+/** materiales/{id}: archivos del curso (se gestionan en Panel → Curso, o con `npm run subir-curso`). */
 export interface Material {
   id: string;
   titulo: string;
@@ -17,6 +18,7 @@ export interface Material {
 
 export interface MaterialInterno extends Material {
   rutaArchivo: string;
+  orden: number;
 }
 
 export async function obtenerMateriales(): Promise<MaterialInterno[]> {
@@ -33,9 +35,10 @@ export async function obtenerMateriales(): Promise<MaterialInterno[]> {
       descripcion: m.descripcion ?? "",
       bytes: m.bytes ?? 0,
       rutaArchivo: m.rutaArchivo,
+      orden: Number(m.orden ?? 0),
     };
   });
 }
 
 /** Lo que se envía al navegador (sin la ruta interna de Storage). */
-export const aPublico = ({ rutaArchivo: _r, ...m }: MaterialInterno): Material => m;
+export const aPublico = ({ rutaArchivo: _r, orden: _o, ...m }: MaterialInterno): Material => m;

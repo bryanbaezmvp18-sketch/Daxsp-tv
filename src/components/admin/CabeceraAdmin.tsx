@@ -4,10 +4,11 @@ import { Logo } from "@/components/landing/Logo";
 import { BotonSalir } from "@/components/BotonSalir";
 import { RelojSesion } from "./RelojSesion";
 
-type Seccion = "pedidos" | "precios" | "cuentas" | "administradores";
+type Seccion = "pedidos" | "curso" | "precios" | "cuentas" | "administradores";
 
 const SECCIONES: { href: string; texto: string; clave: Seccion }[] = [
   { href: "/admin", texto: "Pedidos", clave: "pedidos" },
+  { href: "/admin/curso", texto: "Curso", clave: "curso" },
   { href: "/admin/precios", texto: "Precios", clave: "precios" },
   { href: "/admin/cuentas", texto: "Cuentas", clave: "cuentas" },
   { href: "/admin/administradores", texto: "Admins", clave: "administradores" },
