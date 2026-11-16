@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { BotonComprar } from "./BotonComprar";
+import { OcultarAlBajar } from "./OcultarAlBajar";
 import {
   beneficios,
   pasos,
@@ -275,7 +276,7 @@ export function Footer() {
 /** Barra fija inferior solo en móvil. */
 export function CTAMovil({ p }: { p: Precios }) {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-borde bg-fondo/90 px-4 pt-3 pb-[max(.75rem,env(safe-area-inset-bottom))] backdrop-blur-xl sm:hidden">
+    <OcultarAlBajar className="fixed inset-x-0 bottom-0 z-40 border-t border-borde bg-fondo/90 px-4 pt-3 pb-[max(.75rem,env(safe-area-inset-bottom))] backdrop-blur-xl sm:hidden">
       <div className="flex items-center justify-between gap-3">
         <div className="leading-tight">
           <div className="font-display text-lg font-bold">{formatoUSD(p.usd)}</div>
@@ -283,6 +284,6 @@ export function CTAMovil({ p }: { p: Precios }) {
         </div>
         <BotonComprar p={p} compacto tachado={false} className="flex-1 py-3!" />
       </div>
-    </div>
+    </OcultarAlBajar>
   );
 }

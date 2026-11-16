@@ -11,12 +11,33 @@ import { formatoDOP, formatoUSD } from "@/config/curso";
 export const metadata: Metadata = { title: "Admin · Daxsp TV", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
+/** Cada pestaña con su color (igual que la franja de las tarjetas): activo = relleno, inactivo = borde suave. */
 const FILTROS = [
-  { valor: "pendiente", texto: "Pendientes" },
-  { valor: "aprobado", texto: "Aprobados" },
-  { valor: "rechazado", texto: "Rechazados" },
-  { valor: "retirado", texto: "Acceso retirado" },
-  { valor: "todos", texto: "Todos" },
+  {
+    valor: "pendiente", texto: "Pendientes", icono: "⏳",
+    activo: "border-amber-400 bg-amber-400 text-black", inactivo: "border-amber-400/40 bg-amber-400/10 text-amber-300 hover:bg-amber-400/20",
+    cuenta: "bg-black/15", cuentaInactiva: "bg-amber-400/20",
+  },
+  {
+    valor: "aprobado", texto: "Aprobados", icono: "✅",
+    activo: "border-emerald-400 bg-emerald-400 text-black", inactivo: "border-emerald-400/40 bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400/20",
+    cuenta: "bg-black/15", cuentaInactiva: "bg-emerald-400/20",
+  },
+  {
+    valor: "rechazado", texto: "Rechazados", icono: "✕",
+    activo: "border-red-400 bg-red-400 text-black", inactivo: "border-red-400/40 bg-red-400/10 text-red-300 hover:bg-red-400/20",
+    cuenta: "bg-black/15", cuentaInactiva: "bg-red-400/20",
+  },
+  {
+    valor: "retirado", texto: "Acceso retirado", icono: "🔒",
+    activo: "border-zinc-300 bg-zinc-300 text-black", inactivo: "border-zinc-400/40 bg-zinc-400/10 text-zinc-300 hover:bg-zinc-400/20",
+    cuenta: "bg-black/15", cuentaInactiva: "bg-zinc-400/20",
+  },
+  {
+    valor: "todos", texto: "Todos", icono: "📋",
+    activo: "border-marca bg-marca text-white", inactivo: "border-marca/40 bg-marca/10 text-marca-2 hover:bg-marca/20",
+    cuenta: "bg-black/20", cuentaInactiva: "bg-marca/20",
+  },
 ] as const;
 
 const fecha = (t?: Timestamp | null) =>
@@ -113,11 +134,15 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               key={f.valor}
               href={`/admin?estado=${f.valor}`}
               aria-current={estado === f.valor ? "page" : undefined}
-              className={`shrink-0 rounded-full border px-4 py-2 text-sm transition ${
-                estado === f.valor ? "border-marca bg-marca/15 font-semibold" : "border-borde text-suave hover:text-texto"
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                estado === f.valor ? `${f.activo} shadow-md shadow-black/30` : f.inactivo
               }`}
             >
-              {f.texto} <span className="ml-1 text-xs opacity-70">{conteo(f.valor)}</span>
+              <span aria-hidden>{f.icono}</span>
+              {f.texto}
+              <span className={`ml-0.5 rounded-full px-2 py-0.5 text-xs font-bold ${estado === f.valor ? f.cuenta : f.cuentaInactiva}`}>
+                {conteo(f.valor)}
+              </span>
             </Link>
           ))}
         </nav>

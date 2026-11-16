@@ -67,11 +67,13 @@ export function PopupOferta({ p }: { p: Precios }) {
 
   return createPortal(
     <div
-      className={`fixed inset-0 z-[95] grid place-items-center overflow-y-auto bg-black/75 p-4 backdrop-blur-sm transition-opacity duration-300 ${
+      className={`fixed inset-0 z-[95] overflow-y-auto overscroll-contain bg-black/75 backdrop-blur-sm transition-opacity duration-300 ${
         saliendo ? "opacity-0" : "popup-entrada-fondo"
       }`}
       onClick={cerrar}
     >
+      {/* Centrado seguro: siempre en el medio de la pantalla; si no cabe, se desplaza sin cortarse arriba */}
+      <div className="flex min-h-full items-center justify-center px-4 py-6">
       <div
         role="dialog"
         aria-modal="true"
@@ -134,6 +136,7 @@ export function PopupOferta({ p }: { p: Precios }) {
             </button>
           </div>
         </div>
+      </div>
       </div>
     </div>,
     document.body,
