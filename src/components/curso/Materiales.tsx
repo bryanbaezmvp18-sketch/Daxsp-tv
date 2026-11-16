@@ -119,7 +119,7 @@ function Guia({ m }: { m: Material }) {
       <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between">
         <Cabecera m={m} />
         <div className="shrink-0">
-          <BotonDescargar id={m.id} />
+          <BotonDescargar id={m.id} primario />
         </div>
       </div>
       <div className="max-h-[60vh] overflow-y-auto border-t border-borde bg-black/20 px-4 py-4 sm:px-6">
