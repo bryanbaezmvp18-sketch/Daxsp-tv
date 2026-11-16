@@ -48,7 +48,7 @@ export function MenuMovil({ enlaces, p }: { enlaces: { href: string; texto: stri
                 </a>
               </li>
               <li className="pt-2 pb-1">
-                <BotonComprar p={p} href="#precio" onClick={() => setAbierto(false)} className="w-full" />
+                <BotonComprar p={p} onClick={() => setAbierto(false)} className="w-full" />
               </li>
             </ul>
           </div>

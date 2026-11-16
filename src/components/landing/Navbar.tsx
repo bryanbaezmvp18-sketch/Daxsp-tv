@@ -36,7 +36,7 @@ export function Navbar({ p }: { p: Precios }) {
           <Link href="/entrar" className="hidden text-sm text-suave hover:text-texto lg:inline">
             Mi cuenta
           </Link>
-          <BotonComprar p={p} href="#precio" compacto className="hidden! sm:inline-flex!" />
+          <BotonComprar p={p} compacto className="hidden! sm:inline-flex!" />
           <MenuMovil enlaces={enlacesNav} p={p} />
         </div>
       </nav>
