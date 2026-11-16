@@ -132,3 +132,13 @@ details[open] .chevron {
   html { scroll-behavior: auto; }
   * { animation: none !important; transition: none !important; }
 }
+
+/* Que el menú fijo no tape el título al saltar a una sección */
+section[id] {
+  scroll-margin-top: 6rem;
+}
+
+/* Evita que el navegador «corrija» el scroll cuando la cabecera cambia de alto (causaba temblor) */
+html {
+  overflow-anchor: none;
+}

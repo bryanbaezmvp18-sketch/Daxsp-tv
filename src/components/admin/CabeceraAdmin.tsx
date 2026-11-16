@@ -1,25 +1,9 @@
 import Link from "next/link";
 import { marca } from "@/config/curso";
-import { Logo } from "@/components/landing/Logo";
+import { FondoBanner, LogoAnimado } from "@/components/marca/Banner";
 import { BotonSalir } from "@/components/BotonSalir";
 import { RelojSesion } from "./RelojSesion";
 import { MenuAdmin, type Seccion } from "./MenuAdmin";
-
-/** Logo con anillo de colores que gira y un resplandor que respira. */
-function LogoAnimado() {
-  return (
-    <span className="relative grid h-14 w-14 shrink-0 place-items-center sm:h-16 sm:w-16">
-      <span aria-hidden className="absolute inset-0 animate-pulse rounded-2xl bg-marca/40 blur-xl [animation-duration:2.5s]" />
-      <span
-        aria-hidden
-        className="absolute inset-0 animate-spin rounded-2xl bg-[conic-gradient(from_0deg,#22d3ee,#8b5cf6,#f472b6,#f59e0b,#22d3ee)] [animation-duration:6s]"
-      />
-      <span className="relative grid h-[calc(100%-4px)] w-[calc(100%-4px)] place-items-center rounded-[14px] bg-[#0d0a18]">
-        <Logo className="h-9 w-9 sm:h-10 sm:w-10" />
-      </span>
-    </span>
-  );
-}
 
 /**
  * Cabecera del panel: banner con fondo de marca (marca de agua, brillos y el
@@ -31,29 +15,7 @@ export function CabeceraAdmin({ email, activa, expira }: { email: string; activa
     <>
       {/* ── Banner con fondo ── */}
       <header className="relative overflow-hidden border-b-2 border-marca/70 bg-[#07050f]">
-        {/* Fondo: brillos de color */}
-        <div aria-hidden className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-24 -left-16 h-72 w-72 rounded-full bg-marca/35 blur-[90px]" />
-          <div className="absolute -right-10 -bottom-28 h-72 w-96 rounded-full bg-marca-2/25 blur-[90px]" />
-          <div className="absolute top-0 left-1/2 h-40 w-[40rem] -translate-x-1/2 rounded-full bg-acento/10 blur-[80px]" />
-        </div>
-        {/* Fondo: cuadrícula sutil */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:28px_28px]"
-        />
-        {/* Fondo: marca de agua gigante */}
-        <p
-          aria-hidden
-          className="pointer-events-none absolute -top-3 left-24 font-display text-[5.5rem] leading-none font-black tracking-tighter whitespace-nowrap text-transparent italic select-none [-webkit-text-stroke:1.5px_rgba(139,92,246,.35)] sm:left-40 sm:text-[8rem]"
-        >
-          DAXSP TV
-        </p>
-        {/* Fondo: logo «D» difuminado a la derecha */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute top-1/2 -right-10 h-40 w-40 -translate-y-1/2 rotate-12 bg-[url('/instructor.jpeg')] bg-cover bg-center opacity-20 mix-blend-screen [mask-image:radial-gradient(circle,#000_45%,transparent_72%)] sm:-right-8 sm:h-56 sm:w-56 sm:opacity-25"
-        />
+        <FondoBanner />
 
         <div className="relative mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-3 px-4 py-4 sm:flex-nowrap sm:py-6">
           <Link href="/admin" className="flex min-w-0 items-center gap-3" aria-label={`${marca.nombre} · panel`}>

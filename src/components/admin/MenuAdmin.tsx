@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useMinimizado } from "@/components/marca/useMinimizado";
 
 export type Seccion = "pedidos" | "curso" | "precios" | "cuentas" | "administradores";
 
@@ -42,33 +42,6 @@ const SECCIONES: {
   },
 ];
 
-/** true mientras se desliza hacia abajo; false al subir o arriba del todo. */
-function useMinimizado() {
-  const [minimizado, setMinimizado] = useState(false);
-  const ultimaY = useRef(0);
-  useEffect(() => {
-    ultimaY.current = window.scrollY;
-    let pendiente = false;
-    const revisar = () => {
-      pendiente = false;
-      const y = window.scrollY;
-      const delta = y - ultimaY.current;
-      if (y < 120) setMinimizado(false); // cerca de arriba: tamaño normal
-      else if (delta > 6) setMinimizado(true); // bajando
-      else if (delta < -6) setMinimizado(false); // subiendo
-      if (Math.abs(delta) > 6 || y < 120) ultimaY.current = y;
-    };
-    const alDesplazar = () => {
-      if (pendiente) return;
-      pendiente = true;
-      requestAnimationFrame(revisar);
-    };
-    window.addEventListener("scroll", alDesplazar, { passive: true });
-    return () => window.removeEventListener("scroll", alDesplazar);
-  }, []);
-  return minimizado;
-}
-
 /**
  * Menú del panel en cápsula luminosa, fijo arriba. Cada sección tiene su color.
  * Al deslizar hacia abajo se minimiza (en el celular, solo íconos); al subir vuelve.
@@ -79,18 +52,18 @@ export function MenuAdmin({ activa }: { activa: Seccion }) {
   return (
     <nav
       aria-label="Secciones del panel"
-      className={`sticky top-0 z-40 border-b border-marca/30 bg-[#0b0816]/90 backdrop-blur-xl transition-[padding] duration-300 ${mini ? "py-1.5" : "py-3"}`}
+      className={`sticky top-0 z-40 border-b border-marca/30 bg-[#0b0816]/90 backdrop-blur-xl transition-[padding] duration-300 ${mini ? "py-1" : "py-3"}`}
     >
       <div className="mx-auto max-w-6xl px-4">
         {/* Borde de la cápsula con los colores de la marca */}
         <div
-          className={`bg-[linear-gradient(110deg,#22d3ee,#8b5cf6,#f472b6,#f59e0b,#22d3ee)] p-[2px] shadow-[0_0_28px_-6px_var(--color-marca)] transition-all duration-300 sm:w-fit sm:rounded-full ${
-            mini ? "rounded-full" : "rounded-3xl"
+          className={`bg-[linear-gradient(110deg,#22d3ee,#8b5cf6,#f472b6,#f59e0b,#22d3ee)] p-[2px] transition-all duration-300 sm:w-fit sm:rounded-full ${
+            mini ? "rounded-full opacity-95 shadow-[0_0_10px_-6px_var(--color-marca)]" : "rounded-3xl shadow-[0_0_28px_-6px_var(--color-marca)]"
           }`}
         >
           <div
-            className={`grid grid-cols-5 gap-1 bg-[#0d0a1a] transition-all duration-300 sm:flex sm:rounded-full ${
-              mini ? "rounded-full p-1" : "rounded-[22px] p-1.5"
+            className={`grid grid-cols-5 gap-1 bg-[#05030c] transition-all duration-300 sm:flex sm:rounded-full ${
+              mini ? "rounded-full p-0.5" : "rounded-[22px] p-1.5"
             }`}
           >
             {SECCIONES.map((s) => {
@@ -103,14 +76,14 @@ export function MenuAdmin({ activa }: { activa: Seccion }) {
                   title={s.texto}
                   className={`flex min-w-0 items-center justify-center border-2 font-semibold whitespace-nowrap transition-all duration-300 sm:flex-row sm:rounded-full ${
                     mini
-                      ? "gap-1.5 rounded-full px-1 py-1 text-xs sm:px-3 sm:py-1"
+                      ? "gap-1.5 rounded-full px-1 py-0.5 text-xs sm:px-3 sm:py-1"
                       : "flex-col gap-1 rounded-2xl px-1 py-1.5 text-[11px] sm:gap-2 sm:px-3 sm:py-1.5 sm:text-sm"
                   } ${activo ? s.activo : `border-transparent ${s.texto_} hover:bg-white/5`}`}
                 >
                   <span
                     aria-hidden
                     className={`grid shrink-0 place-items-center rounded-full ring-1 transition-all duration-300 ${s.chip} ${
-                      mini ? "h-6 w-6 text-xs" : "h-7 w-7 text-sm"
+                      mini ? "h-5 w-5 text-[10px] sm:h-6 sm:w-6 sm:text-xs" : "h-7 w-7 text-sm"
                     }`}
                   >
                     {s.icono}
