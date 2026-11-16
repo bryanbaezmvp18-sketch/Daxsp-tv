@@ -30,10 +30,10 @@ export function RelojSesion({ expira }: { expira: number }) {
   if (!hora) return null;
   return (
     <span
-      className={`hidden rounded-full px-2.5 py-1 text-xs sm:inline ${pocoTiempo ? "bg-amber-400/15 text-amber-300" : "bg-white/5 text-suave"}`}
+      className={`shrink-0 rounded-full px-2.5 py-1 text-xs whitespace-nowrap ${pocoTiempo ? "border border-red-400/50 bg-red-400/15 text-red-200" : "border border-amber-400/40 bg-amber-400/10 text-amber-200"}`}
       title="Por seguridad, la sesión del panel se cierra sola 5 horas después de entrar"
     >
-      🔒 Sesión hasta {hora}
+      🔒 <span className="hidden sm:inline">Sesión hasta </span>{hora}
     </span>
   );
 }
