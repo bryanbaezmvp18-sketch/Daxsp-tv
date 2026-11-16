@@ -117,7 +117,7 @@ export function BotonesPayPal({ datos, activo, p }: { datos: DatosCliente; activ
       <div className="mb-5 flex items-center justify-between gap-3">
         <div>
           <p className="font-semibold">Paga con tarjeta de crédito/débito o PayPal</p>
-          <p className="text-xs text-suave">No necesitas cuenta de PayPal. Acceso inmediato al curso.</p>
+          <p className="text-xs text-suave">No necesitas cuenta de PayPal. Confirmamos tu pago y te damos acceso al curso.</p>
         </div>
         <span className="shrink-0 font-display text-xl font-bold">{formatoUSD(p.usd)}</span>
       </div>

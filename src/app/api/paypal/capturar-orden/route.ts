@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       );
     }
     await registrarPagoPayPal(orderId, captura, "captura");
-    return NextResponse.json({ ok: true, acceso: "/mi-cuenta" }); // ahí ve su curso desbloqueado
+    return NextResponse.json({ ok: true, acceso: "/mi-cuenta" }); // ahí ve «En revisión» hasta que el admin apruebe
   } catch (e) {
     console.error("Error capturando orden PayPal:", e);
     return NextResponse.json({ error: "Hubo un problema confirmando tu pago. Escríbenos y lo resolvemos." }, { status: 500 });

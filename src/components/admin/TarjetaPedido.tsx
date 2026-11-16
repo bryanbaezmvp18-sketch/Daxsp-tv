@@ -219,7 +219,7 @@ export function TarjetaPedido({ p, recienAprobado = false }: { p: PedidoVista; r
         {p.metodo === "paypal" ? (
           <div className="rounded-xl bg-white/[.03] p-4 text-sm">
             <Dato t="Orden PayPal" v={p.paypalOrderId} mono />
-            <p className="mt-2 text-xs text-suave">Pago automático con tarjeta/PayPal.</p>
+            <p className="mt-2 text-xs text-suave">Cobrado por PayPal (tarjeta o cuenta PayPal). Búscalo en tu PayPal con este número de orden.</p>
           </div>
         ) : (
           <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-xl bg-white/[.03] p-4 sm:grid-cols-4">
@@ -256,7 +256,11 @@ export function TarjetaPedido({ p, recienAprobado = false }: { p: PedidoVista; r
       <div className="p-5 pt-4">
         {p.estado === "pendiente" && (
           <div className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-400/25 bg-amber-400/5 p-3">
-            <p className="mr-auto text-sm text-amber-200">Revisa el comprobante y confirma si el dinero llegó.</p>
+            <p className="mr-auto text-sm text-amber-200">
+              {p.metodo === "paypal"
+                ? "PayPal ya cobró este pago. Confírmalo en tu PayPal y aprueba para darle el curso."
+                : "Revisa el comprobante y confirma si el dinero llegó."}
+            </p>
             <button onClick={aprobar} disabled={pendiente} className={`${btnBase} bg-emerald-500 text-black hover:bg-emerald-400`}>
               ✓ Aprobar y dar acceso
             </button>
@@ -338,6 +342,11 @@ export function TarjetaPedido({ p, recienAprobado = false }: { p: PedidoVista; r
             </p>
             {formulario === "quitar" && (
               <p className="text-xs text-suave">Dejará de ver el curso al instante. Podrás devolvérselo cuando quieras.</p>
+            )}
+            {formulario === "rechazar" && p.metodo === "paypal" && (
+              <p className="text-xs text-amber-200">
+                ⚠️ PayPal ya cobró este pago. Si lo rechazas, recuerda devolverle el dinero desde tu cuenta de PayPal.
+              </p>
             )}
             <label className="block text-sm">
               {formulario === "rechazar" ? "Motivo (lo verá el cliente)" : "Motivo (opcional, lo verá el cliente)"}

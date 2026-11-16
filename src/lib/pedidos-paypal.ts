@@ -2,7 +2,7 @@ import "server-only";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { nombreCompleto, type DatosCliente } from "@/lib/cliente";
-import { alumnoParaPedido, concederAcceso, datosAlumno } from "@/lib/pedidos";
+import { alumnoParaPedido, datosAlumno } from "@/lib/pedidos";
 import type { CapturaPayPal } from "@/lib/paypal";
 
 /**
@@ -28,6 +28,9 @@ export async function registrarPagoPayPal(orderId: string, captura: CapturaPayPa
     if (!orden.exists) throw new Error("Orden de PayPal desconocida");
     const cliente = orden.get("cliente") as DatosCliente;
     const uid = orden.get("uid") as string | undefined;
+    // Lecturas antes de escribir (regla de las transacciones)
+    const usuarioRef = uid ? db.collection("usuarios").doc(uid) : null;
+    const usuario = usuarioRef ? await tx.get(usuarioRef) : null;
 
     const alumno = await alumnoParaPedido(db, tx, cliente);
     if (alumno.existe) tx.update(alumno.ref, datosAlumno(cliente));
@@ -42,18 +45,21 @@ export async function registrarPagoPayPal(orderId: string, captura: CapturaPayPa
       metodo: "paypal",
       monto: Number(captura.monto),
       moneda: "USD",
-      estado: "pendiente", // concederAcceso lo pasa a "aprobado"
+      estado: "pendiente", // el admin lo aprueba desde el panel (concederAcceso)
       paypalOrderId: orderId,
       paypalCaptureId: captura.captureId,
       registradoPor: origen,
-      historial: [{ estado: "pendiente", fecha: Timestamp.now(), nota: `Pago con PayPal/tarjeta (${origen})` }],
+      historial: [{ estado: "pendiente", fecha: Timestamp.now(), nota: `Pago cobrado por PayPal/tarjeta (${origen}). Esperando aprobación.` }],
       motivoRechazo: null,
       creadoEn: FieldValue.serverTimestamp(),
       revisadoEn: null,
       revisadoPor: null,
     });
     tx.update(ordenRef, { estado: "capturada", capturadaEn: FieldValue.serverTimestamp() });
+    // El cliente ve «En revisión» en «Mi cuenta» hasta que el admin lo apruebe
+    if (usuarioRef && usuario?.exists) {
+      tx.update(usuarioRef, { estadoCompra: "pendiente", pedidoActual: orderId, motivoRechazo: null });
+    }
   });
-
-  return concederAcceso(orderId, `PayPal (${origen})`);
+  // Ya NO se da acceso automático: el curso se desbloquea solo cuando el admin aprueba el pedido.
 }

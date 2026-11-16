@@ -92,7 +92,7 @@ export function Checkout({
             onClick={() => setMetodo("paypal")}
             icono="💳"
             titulo="Tarjeta o PayPal"
-            detalle={`${formatoUSD(p.usd)} · acceso inmediato`}
+            detalle={`${formatoUSD(p.usd)} · pago seguro`}
           />
         </div>
 
